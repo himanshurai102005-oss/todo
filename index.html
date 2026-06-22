@@ -507,7 +507,55 @@ body {
 }
 .bm-ok:active{transform:scale(0.96);}
 
-/* COMING SOON CARD */
+/* CIRCLE DONUT CHARTS */
+.circles-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.circle-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 16px 8px 12px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  text-align: center;
+  animation: cardIn 0.4s ease both;
+  transition: transform 0.2s, border-color 0.2s;
+}
+.circle-card:active { transform: scale(0.96); }
+.circle-wrap {
+  position: relative; width: 72px; height: 72px;
+}
+.donut-svg { width: 100%; height: 100%; }
+.donut-ring {
+  stroke-dasharray: 0 226;
+  transition: stroke-dasharray 1s cubic-bezier(0.4,0,0.2,1);
+  filter: drop-shadow(0 0 4px currentColor);
+}
+.circle-inner {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 1px;
+}
+.circle-pct {
+  font-family: var(--font-h); font-size: 15px; font-weight: 800; line-height: 1;
+}
+.circle-days {
+  font-size: 10px; color: var(--muted); font-weight: 600;
+}
+.circle-name {
+  font-family: var(--font-h); font-size: 11.5px; font-weight: 700;
+  color: var(--text); line-height: 1.3;
+  display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden;
+}
+.circle-streak {
+  font-size: 11px; font-weight: 600;
+}
+
+
 .coming-soon-card {
   border-radius: 22px;
   padding: 24px 20px;
@@ -756,21 +804,8 @@ body {
         <div id="streakLeaderboard" class="streak-leaderboard"></div>
 
         <div class="section-label">📊 Habit Completion</div>
-        <div id="progressHabits"></div>
+        <div id="progressHabits" class="circles-grid"></div>
 
-        <div class="section-label">🗓️ Activity Heatmap (This Month)</div>
-        <div class="heatmap-wrap card" style="padding:16px;">
-          <div class="heatmap-grid" id="heatmapGrid"></div>
-          <div class="heatmap-legend">
-            <span>Less</span>
-            <div class="hl-dot" style="background:rgba(255,255,255,0.05)"></div>
-            <div class="hl-dot l1"></div>
-            <div class="hl-dot l2"></div>
-            <div class="hl-dot l3"></div>
-            <div class="hl-dot l4"></div>
-            <span>More</span>
-          </div>
-        </div>
         <div style="height:12px;"></div>
       </div>
     </div>
@@ -1300,24 +1335,55 @@ function renderProgress() {
   if(!state.habits.length) {
     ph.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:12px 0;">Koi habit nahi hai.</div>';
   } else {
-    state.habits.forEach(h => {
+    state.habits.forEach((h, idx) => {
       let cnt=0;
       for(let d=1;d<=totalDays;d++) if(h.done[dayKey(y,m,d)]) cnt++;
       const pct = totalDays>0?Math.round(cnt/totalDays*100):0;
       const color = h.color||'#818cf8';
+      const r = 36, circ = 2*Math.PI*r;
+      const dash = (pct/100)*circ;
+      const gap = circ - dash;
+
+      // streak for this habit
+      let streak=0;
+      for(let d=isCurrentMonth?today.getDate():daysInMonth(y,m);d>=1;d--) {
+        if(h.done[dayKey(y,m,d)]) streak++; else break;
+      }
+
       const div = document.createElement('div');
-      div.className = 'progress-habit-item';
+      div.className = 'circle-card';
+      div.style.animationDelay = idx*0.07+'s';
       div.innerHTML = `
-        <div class="phi-row">
-          <div class="phi-dot" style="background:${color}"></div>
-          <div class="phi-name">${h.name}</div>
-          <div class="phi-pct" style="color:${color}">${pct}%</div>
+        <div class="circle-wrap">
+          <svg viewBox="0 0 88 88" class="donut-svg">
+            <circle cx="44" cy="44" r="${r}" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="8"/>
+            <circle cx="44" cy="44" r="${r}" fill="none"
+              stroke="${color}" stroke-width="8"
+              stroke-linecap="round"
+              stroke-dasharray="${dash} ${gap}"
+              stroke-dashoffset="${circ/4}"
+              class="donut-ring" style="--dash:${dash};--gap:${gap};--circ:${circ};"
+              transform="rotate(-90 44 44)"
+            />
+          </svg>
+          <div class="circle-inner">
+            <div class="circle-pct" style="color:${color}">${pct}%</div>
+            <div class="circle-days">${cnt}d</div>
+          </div>
         </div>
-        <div class="phi-bar-bg"><div class="phi-bar-fill" style="width:0%;background:${color}" data-w="${pct}"></div></div>
-        <div class="phi-meta"><span>${cnt} days done</span><span>${totalDays-cnt} missed</span></div>
+        <div class="circle-name">${h.name}</div>
+        <div class="circle-meta">
+          ${streak>0?`<span class="circle-streak">🔥 ${streak}</span>`:'<span class="circle-streak" style="color:var(--muted)">—</span>'}
+        </div>
       `;
       ph.appendChild(div);
-      setTimeout(()=>{div.querySelector('.phi-bar-fill').style.width=pct+'%';},50);
+
+      // Animate ring on render
+      setTimeout(()=>{
+        const ring = div.querySelector('.donut-ring');
+        ring.style.transition = 'stroke-dasharray 1s cubic-bezier(0.4,0,0.2,1)';
+        ring.style.strokeDasharray = `${dash} ${gap}`;
+      }, 80 + idx*60);
     });
   }
 
