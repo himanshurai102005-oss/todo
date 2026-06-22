@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Premium Habit Tracker with Backup System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
+<style>
+  :root {
+    --bg-gradient: radial-gradient(circle at 20% 0%, #1b1438 0%, #0f0c29 35%, #0a0a18 100%);
+    --card-bg: rgba(30, 32, 59, 0.55);
+    --card-bg-hover: rgba(36, 38, 68, 0.7);
+    --border-color: rgba(255, 255, 255, 0.09);
+    --border-color-hover: rgba(255, 255, 255, 0.18);
+    --text-main: #f8fafc;
+    --text-muted: #9aa3c0;
+    --font-heading: 'Poppins', sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg-gradient);
+    background-attachment: fixed;
+    color: var(--text-main);
+    min-height: 100vh;
+    padding: 2.5rem 1rem;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  body::before, body::after {
+    content: '';
+    position: fixed;
+    width: 480px; height: 480px;
+    border-radius: 50%;
+    filter: blur(120px);
+    z-index: 0;
+    opacity: 0.32;
+    pointer-events: none;
+  }
+  body::before { background: #6366f1; top: -150px; left: -150px; animation: floatBlob 14s ease-in-out infinite; }
+  body::after { background: #ec4899; bottom: -150px; right: -150px; animation: floatBlob 16s ease-in-out infinite reverse; }
+  @keyframes floatBlob {
+    0%, 100% { transform: translate(0,0) scale(1); }
+    50% { transform: translate(40px, 30px) scale(1.1); }
+  }
+
+  .container { max-width: 1080px; margin: 0 auto; position: relative; z-index: 1; }
+
+  /* ===== HEADER ===== */
+  .header-zone {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.6rem;
+    flex-wrap: wrap;
+    gap: 15px;
+    animation: fadeSlideDown 0.6s ease both;
+  }
+  .profile-title-area { display: flex; align-items: center; gap: 10px; }
+  .editable-name {
+    font-family: var(--font-heading);
+    font-size: 26px; font-weight: 700;
+    background: transparent; border: none; color: #fff;
+    border-bottom: 2px dashed rgba(255,255,255,0.2);
+    outline: none; padding-bottom: 4px; width: 280px;
+    letter-spacing: 0.2px; transition: all 0.3s;
+  }
+  .editable-name::placeholder { color: rgba(255,255,255,0.35); }
+  .editable-name:focus { border-bottom-color: #818cf8; text-shadow: 0 0 14px rgba(129, 140, 248, 0.6); }
+  .bolt-icon { font-size: 24px; display: inline-block; animation: pulseBolt 2.4s ease-in-out infinite; }
+  @keyframes pulseBolt {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.15) rotate(-6deg); }
+  }
+  .storage-actions { display: flex; gap: 10px; }
+  .btn-storage {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-main); padding: 9px 16px; border-radius: 10px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+  }
+  .btn-storage:hover {
+    background: rgba(129, 140, 248, 0.15); border-color: #818cf8;
+    transform: translateY(-2px); box-shadow: 0 6px 16px rgba(129, 140, 248, 0.25);
+  }
+  .btn-storage:active { transform: translateY(0); }
+
+  /* ===== STATS DASHBOARD ===== */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 1.4rem;
+    animation: fadeSlideUp 0.6s ease 0.05s both;
+  }
+  .stat-tile {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 16px 18px;
+    backdrop-filter: blur(14px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    display: flex; flex-direction: column; gap: 6px;
+    transition: transform 0.25s, border-color 0.25s;
+  }
+  .stat-tile:hover { transform: translateY(-2px); border-color: var(--border-color-hover); }
+  .stat-icon-row { display: flex; align-items: center; justify-content: space-between; }
+  .stat-icon {
+    width: 32px; height: 32px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; color: #fff;
+  }
+  .stat-value { font-family: var(--font-heading); font-size: 24px; font-weight: 700; line-height: 1; }
+  .stat-label { font-size: 11.5px; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; }
+
+  /* ===== TOP BAR ===== */
+  .top-bar {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    border-radius: 18px;
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 1rem; flex-wrap: wrap;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(14px);
+    animation: fadeSlideUp 0.6s ease 0.1s both;
+  }
+  .month-select, .habit-input {
+    height: 46px; border: 1px solid var(--border-color); border-radius: 12px;
+    padding: 0 16px; font-size: 14px; font-family: var(--font-body);
+    background: rgba(15, 13, 35, 0.55); color: #fff; outline: none; transition: all 0.3s;
+  }
+  .month-select:focus, .habit-input:focus { border-color: #818cf8; box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.18); }
+  .month-select { width: 170px; cursor: pointer; }
+  .habit-input { flex: 1; min-width: 200px; }
+  .habit-input::placeholder { color: rgba(255,255,255,0.35); }
+  .add-btn {
+    height: 46px; padding: 0 24px; border: none; border-radius: 12px;
+    background: linear-gradient(135deg, #818cf8 0%, #6366f1 50%, #4f46e5 100%);
+    color: #fff; cursor: pointer; font-size: 14px; font-weight: 600;
+    display: flex; align-items: center; gap: 8px; font-family: var(--font-heading);
+    transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.45);
+  }
+  .add-btn:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 10px 26px rgba(99, 102, 241, 0.6); }
+  .add-btn:active { transform: translateY(0) scale(0.98); }
+
+  .suggestions {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.8rem; padding-left: 5px;
+    animation: fadeSlideUp 0.6s ease 0.18s both;
+  }
+  .suggestions-label { font-size: 12px; color: var(--text-muted); align-self: center; margin-right: 5px; font-weight: 500; }
+  .suggest-pill {
+    background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color);
+    padding: 7px 15px; border-radius: 20px; font-size: 12.5px; font-weight: 500;
+    color: var(--text-muted); cursor: pointer; transition: all 0.25s;
+  }
+  .suggest-pill:hover { background: rgba(129, 140, 248, 0.18); color: #c7d2fe; border-color: #818cf8; transform: scale(1.06) translateY(-1px); }
+
+  /* ===== HABITS GRID (dashboard cards) ===== */
+  .habits-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 1.1rem;
+  }
+
+  .habit-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 18px; overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    position: relative;
+    backdrop-filter: blur(14px);
+    transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+    animation: cardIn 0.5s cubic-bezier(0.4,0,0.2,1) both;
+    display: flex; flex-direction: column;
+  }
+  .habit-card:hover { border-color: var(--border-color-hover); transform: translateY(-3px); box-shadow: 0 16px 36px rgba(0,0,0,0.35); }
+  .habit-card::before {
+    content: ''; position: absolute; top:0; left:0; width: 4px; height: 100%;
+    background: var(--accent-color, #818cf8); box-shadow: 0 0 12px var(--accent-color, #818cf8);
+  }
+
+  @keyframes cardIn { from { opacity: 0; transform: translateY(14px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  @keyframes fadeSlideDown { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+  .habit-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 18px; background: rgba(255,255,255,0.02); gap: 8px;
+  }
+  .habit-name-area { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .habit-ring {
+    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10.5px; font-weight: 700; font-family: var(--font-heading); color: #fff;
+    position: relative;
+  }
+  .habit-name {
+    font-family: var(--font-heading); font-size: 15.5px; font-weight: 600; color: #fff;
+    letter-spacing: 0.1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .habit-meta { font-size: 11.5px; color: var(--text-muted); }
+  .habit-stats-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .streak-badge {
+    background: linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%); color: #fff;
+    font-size: 10.5px; padding: 4px 10px; border-radius: 20px; font-weight: 600;
+    box-shadow: 0 3px 12px rgba(255, 126, 95, 0.45);
+    animation: streakPop 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    white-space: nowrap;
+  }
+  @keyframes streakPop { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .delete-habit {
+    background: none; border: none; cursor: pointer; color: var(--text-muted);
+    font-size: 15px; padding: 6px; border-radius: 9px; transition: all 0.2s;
+  }
+  .delete-habit:hover { color: #f43f5e; background: rgba(244, 63, 94, 0.12); transform: scale(1.1); }
+
+  .days-header { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; padding: 12px 16px 0; }
+  .day-label-cell {
+    text-align: center; font-size: 10px; color: var(--text-muted); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.4px; font-family: var(--font-heading);
+  }
+  .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; padding: 6px 16px 16px; }
+  .day-cell {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    cursor: pointer; padding: 4px 1px; border-radius: 8px; transition: background 0.2s, transform 0.2s;
+  }
+  .day-cell:hover { background: rgba(255, 255, 255, 0.06); transform: translateY(-1px); }
+  .day-cell:active .day-check { transform: scale(0.88); }
+  .day-num { font-size: 9.5px; color: var(--text-muted); font-weight: 500; }
+  .day-check {
+    width: 23px; height: 23px; border-radius: 7px;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    background: rgba(15, 13, 35, 0.5);
+  }
+  .day-check.done {
+    background: var(--accent-color, #818cf8); border-color: var(--accent-color, #818cf8);
+    box-shadow: 0 0 12px var(--accent-color, rgba(129, 140, 248, 0.5)); transform: scale(1.05);
+  }
+  .day-check.done::after { content: '✓'; color: white; font-size: 12px; font-weight: 700; animation: checkPop 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+  @keyframes checkPop { from { transform: scale(0); } to { transform: scale(1); } }
+  .day-check.today-ring {
+    border-color: #818cf8; background: rgba(129, 140, 248, 0.12);
+    animation: todayPulse 2s ease-in-out infinite;
+  }
+  @keyframes todayPulse {
+    0% { box-shadow: 0 0 0 0 rgba(129, 140, 248, 0.45); }
+    70% { box-shadow: 0 0 0 5px rgba(129, 140, 248, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(129, 140, 248, 0); }
+  }
+  .day-cell.future-day { opacity: 0.25; pointer-events: none; }
+  .day-cell.blank { pointer-events: none; }
+
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center; padding: 5rem 1rem; color: var(--text-muted); font-size: 15px;
+    background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 18px;
+    backdrop-filter: blur(14px); animation: fadeSlideUp 0.6s ease 0.3s both;
+  }
+  .empty-state i { font-size: 48px; display: block; margin-bottom: 16px; color: rgba(255,255,255,0.15); animation: floatIcon 3s ease-in-out infinite; }
+  @keyframes floatIcon { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+  @media (max-width: 760px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 500px) {
+    .habits-section { grid-template-columns: 1fr; }
+    .day-check { width: 22px; height: 22px; border-radius: 6px; }
+    .editable-name { font-size: 20px; width: 180px; }
+    .header-zone { flex-direction: column; align-items: flex-start; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .stat-tile { padding: 12px 14px; }
+    .stat-value { font-size: 19px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header-zone">
+    <div class="profile-title-area">
+      <input type="text" id="usernameInput" class="editable-name" placeholder="Enter Your Name..." oninput="saveUsername()" title="Click to edit your tracker name" />
+      <span class="bolt-icon">⚡</span>
+    </div>
+    <div class="storage-actions">
+      <button class="btn-storage" onclick="exportData()" title="Save data as a local file">
+        <i class="ti ti-download"></i> Save Backup
+      </button>
+      <button class="btn-storage" onclick="triggerImport()" title="Load data from your local file">
+        <i class="ti ti-upload"></i> Load Backup
+      </button>
+      <input type="file" id="importFileInput" style="display: none;" accept=".json" onchange="importData(event)" />
+    </div>
+  </div>
+
+  <div class="stats-row" id="statsRow"></div>
+
+  <div class="top-bar">
+    <select class="month-select" id="monthSelect"></select>
+    <input type="text" class="habit-input" id="habitInput" placeholder="Naya habit daalo ya neeche se pick karo..." />
+    <button class="add-btn" onclick="addHabit()">
+      <i class="ti ti-plus"></i> Create
+    </button>
+  </div>
+
+  <div class="suggestions">
+    <span class="suggestions-label">Quick Add:</span>
+    <div class="suggest-pill" onclick="quickAdd('Gym 🏋️')">+ Gym</div>
+    <div class="suggest-pill" onclick="quickAdd('Code 💻')">+ Coding</div>
+    <div class="suggest-pill" onclick="quickAdd('Read Books 📚')">+ Reading</div>
+    <div class="suggest-pill" onclick="quickAdd('Meditation 🧘')">+ Meditation</div>
+    <div class="suggest-pill" onclick="quickAdd('Drink Water 💧')">+ Water Intake</div>
+  </div>
+
+  <div class="habits-section" id="habitsSection">
+    <div class="empty-state" id="emptyState">
+      <i class="ti ti-comet"></i>
+      Koi habit nahi hai abhi. Upar se naya routine add karo!
+    </div>
+  </div>
+</div>
+
+<script>
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS = ['January','February','March','April','May','June',
+                'July','August','September','October','November','December'];
+const ACCENT_COLORS = ['#818cf8', '#a855f7', '#f43f5e', '#10b981', '#fbbf24', '#ec4899', '#38bdf8'];
+
+const today = new Date();
+
+function loadState() {
+  try {
+    const s = localStorage.getItem('habitTracker_premium_v3');
+    if (s) {
+      const parsed = JSON.parse(s);
+      if (!parsed.username) parsed.username = "My Habit Tracker";
+      return parsed;
+    }
+  } catch(e) {}
+  return {
+    habits: [],
+    selectedMonth: today.getMonth(),
+    selectedYear: today.getFullYear(),
+    username: "My Habit Tracker"
+  };
+}
+
+let state = loadState();
+
+function save() {
+  try { localStorage.setItem('habitTracker_premium_v3', JSON.stringify(state)); }
+  catch(e) { console.error("Data save nahi ho paaya:", e); }
+}
+
+function saveUsername() {
+  const input = document.getElementById('usernameInput');
+  state.username = input.value;
+  save();
+}
+
+function exportData() {
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
+  const downloadAnchor = document.createElement('a');
+  downloadAnchor.setAttribute("href", dataStr);
+  downloadAnchor.setAttribute("download", `habit_tracker_backup_${today.getFullYear()}_${today.getMonth()+1}.json`);
+  document.body.appendChild(downloadAnchor);
+  downloadAnchor.click();
+  downloadAnchor.remove();
+}
+
+function triggerImport() { document.getElementById('importFileInput').click(); }
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const importedState = JSON.parse(e.target.result);
+      if (importedState && Array.isArray(importedState.habits)) {
+        state = importedState;
+        save();
+        document.getElementById('usernameInput').value = state.username;
+        document.getElementById('monthSelect').value = state.selectedMonth;
+        render();
+        alert('Data Successfully Restore ho gaya hai! 🎉');
+      } else {
+        alert('Invalid backup file formatting.');
+      }
+    } catch (err) {
+      alert('Error reading the backup file.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function getDaysInMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
+function getFirstDay(y, m) { return new Date(y, m, 1).getDay(); }
+
+function init() {
+  document.getElementById('usernameInput').value = state.username;
+  const sel = document.getElementById('monthSelect');
+  const curYear = state.selectedYear;
+  MONTHS.forEach((name, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = name + ' ' + curYear;
+    if (i === state.selectedMonth) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  sel.addEventListener('change', () => { state.selectedMonth = parseInt(sel.value); save(); render(); });
+  document.getElementById('habitInput').addEventListener('keydown', e => { if (e.key === 'Enter') addHabit(); });
+  render();
+}
+
+function addHabit() {
+  const inp = document.getElementById('habitInput');
+  const name = inp.value.trim();
+  if (!name) return;
+  const randomColor = ACCENT_COLORS[Math.floor(Math.random() * ACCENT_COLORS.length)];
+  state.habits.push({ id: Date.now(), name, done: {}, color: randomColor });
+  inp.value = '';
+  save(); render();
+}
+
+function quickAdd(habitName) {
+  const randomColor = ACCENT_COLORS[Math.floor(Math.random() * ACCENT_COLORS.length)];
+  state.habits.push({ id: Date.now(), name: habitName, done: {}, color: randomColor });
+  save(); render();
+}
+
+function toggleDay(habitId, dayKey) {
+  const h = state.habits.find(h => h.id === habitId);
+  if (!h) return;
+  h.done[dayKey] = !h.done[dayKey];
+  save(); render();
+}
+
+function deleteHabit(id) {
+  if (!confirm('Kya aap is habit ko hatana chahte hain?')) return;
+  state.habits = state.habits.filter(h => h.id !== id);
+  save(); render();
+}
+
+function renderStats(habitComputed, totalDaysSoFar) {
+  const statsRow = document.getElementById('statsRow');
+  statsRow.innerHTML = '';
+
+  const totalHabits = state.habits.length;
+  const todayKey = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
+  const isCurrentMonth = (state.selectedYear === today.getFullYear() && state.selectedMonth === today.getMonth());
+  const todayDone = isCurrentMonth ? state.habits.filter(h => h.done[todayKey]).length : 0;
+  const bestStreak = habitComputed.length ? Math.max(...habitComputed.map(h => h.streak), 0) : 0;
+  const avgPct = habitComputed.length ? Math.round(habitComputed.reduce((a,h) => a + h.pct, 0) / habitComputed.length) : 0;
+
+  const tiles = [
+    { icon: 'ti-list-check', color: '#818cf8', value: totalHabits, label: 'Total Habits' },
+    { icon: 'ti-calendar-event', color: '#10b981', value: isCurrentMonth ? `${todayDone}/${totalHabits || 0}` : '—', label: "Today's Progress" },
+    { icon: 'ti-flame', color: '#fb923c', value: bestStreak, label: 'Best Streak' },
+    { icon: 'ti-chart-bar', color: '#ec4899', value: `${avgPct}%`, label: 'Month Avg' },
+  ];
+
+  tiles.forEach(t => {
+    const tile = document.createElement('div');
+    tile.className = 'stat-tile';
+    tile.innerHTML = `
+      <div class="stat-icon-row">
+        <span class="stat-value">${t.value}</span>
+        <span class="stat-icon" style="background:${t.color}"><i class="ti ${t.icon}"></i></span>
+      </div>
+      <span class="stat-label">${t.label}</span>
+    `;
+    statsRow.appendChild(tile);
+  });
+}
+
+function render() {
+  const section = document.getElementById('habitsSection');
+  const empty = document.getElementById('emptyState');
+  const y = state.selectedYear, m = state.selectedMonth;
+  const daysInMonth = getDaysInMonth(y, m);
+  const firstDay = getFirstDay(y, m);
+  const isCurrentMonth = (y === today.getFullYear() && m === today.getMonth());
+  const totalDaysSoFar = isCurrentMonth ? today.getDate() : daysInMonth;
+
+  const existing = section.querySelectorAll('.habit-card');
+  existing.forEach(el => el.remove());
+
+  const habitComputed = state.habits.map(habit => {
+    let doneCnt = 0;
+    for (let d = 1; d <= totalDaysSoFar; d++) { if (habit.done[`${y}-${m}-${d}`]) doneCnt++; }
+    const pct = totalDaysSoFar > 0 ? Math.round((doneCnt / totalDaysSoFar) * 100) : 0;
+    let streak = 0;
+    for (let d = (isCurrentMonth ? today.getDate() : daysInMonth); d >= 1; d--) {
+      if (habit.done[`${y}-${m}-${d}`]) streak++;
+      else break;
+    }
+    return { habit, doneCnt, pct, streak };
+  });
+
+  renderStats(habitComputed, totalDaysSoFar);
+
+  if (state.habits.length === 0) {
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  habitComputed.forEach((hc, idx) => {
+    const { habit, doneCnt, pct, streak } = hc;
+    const card = document.createElement('div');
+    card.className = 'habit-card';
+    card.style.animationDelay = `${idx * 0.06}s`;
+    const habitColor = habit.color || '#818cf8';
+    card.style.setProperty('--accent-color', habitColor);
+
+    const ringBg = `conic-gradient(${habitColor} ${pct * 3.6}deg, rgba(255,255,255,0.08) 0deg)`;
+
+    let headerHTML = `
+      <div class="habit-header">
+        <div class="habit-name-area">
+          <div class="habit-ring" style="background:${ringBg}">
+            <div style="width:28px;height:28px;border-radius:50%;background:#1b1438;display:flex;align-items:center;justify-content:center;font-size:9px;">${pct}%</div>
+          </div>
+          <div style="min-width:0;">
+            <div class="habit-name">${habit.name}</div>
+            <div class="habit-meta">${doneCnt}/${totalDaysSoFar} days</div>
+          </div>
+        </div>
+        <div class="habit-stats-right">
+          ${streak > 1 ? `<span class="streak-badge">🔥 ${streak}</span>` : ''}
+          <button class="delete-habit" onclick="deleteHabit(${habit.id})" title="Delete habit">
+            <i class="ti ti-trash"></i>
+          </button>
+        </div>
+      </div>
+    `;
+
+    let headerRow = '<div class="days-header">';
+    DAYS.forEach(d => { headerRow += `<div class="day-label-cell">${d[0]}</div>`; });
+    headerRow += '</div>';
+
+    let gridHTML = '<div class="days-grid">';
+    for (let b = 0; b < firstDay; b++) { gridHTML += `<div class="day-cell blank"></div>`; }
+    for (let d = 1; d <= daysInMonth; d++) {
+      const key = `${y}-${m}-${d}`;
+      const isDone = !!habit.done[key];
+      const isToday = isCurrentMonth && d === today.getDate();
+      const isFuture = isCurrentMonth && d > today.getDate();
+      gridHTML += `
+        <div class="day-cell${isFuture ? ' future-day' : ''}" onclick="toggleDay(${habit.id}, '${key}')">
+          <span class="day-num">${d}</span>
+          <div class="day-check${isDone ? ' done' : ''}${isToday && !isDone ? ' today-ring' : ''}"></div>
+        </div>`;
+    }
+    gridHTML += '</div>';
+
+    card.innerHTML = headerHTML + headerRow + gridHTML;
+    section.appendChild(card);
+  });
+}
+
+init();
+</script>
+</body>
+</html>
